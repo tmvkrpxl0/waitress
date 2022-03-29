@@ -17,18 +17,4 @@ dependencies {
 
     implementation 'org.slf4j:slf4j-simple:1.7.30'
     implementation 'org.slf4j:slf4j-api:1.7.30'
-
-    [
-            "aether-api",
-            "aether-spi",
-            "aether-impl",
-            "aether-util",
-            "aether-connector-basic",
-            "aether-transport-file",
-            "aether-transport-http"
-    ].forEach({name ->
-        implementation group: 'org.eclipse.aether', name: name, version: '1.1.0'
-    })
-
-    implementation group: 'org.apache.maven', name: 'maven-aether-provider', version: '3.3.9'
 }

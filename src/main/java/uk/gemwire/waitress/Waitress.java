@@ -89,8 +89,6 @@ public class Waitress {
             // Cache all known repositories.
             RepoCache.enumerate();
 
-            if (Config.SHOULD_PROXY) MavenDownloader.setRemote(Config.PROXY_ID, Config.PROXY_TYPE, Config.PROXY_REPO);
-
             LOGGER.info("Set up. Starting route management.");
             // Start the server with the loaded config.
             Server.start();

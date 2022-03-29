@@ -13,9 +13,8 @@ data_dir = "data/"
 proxy = true
 # List the repositories to proxy.
 proxy_repo = "https://maven.gemwire.uk/"
-proxy_id = "maven-central"
-proxy_type = "default"
 #"https://maven.gemwire.uk/"
+# http://localhost:25505/de/oceanlabs/mcp/mcp_config/1.18.1-rc1/mcp_config-1.18.1-rc1.zip
 
 [[endpoint]]
 
