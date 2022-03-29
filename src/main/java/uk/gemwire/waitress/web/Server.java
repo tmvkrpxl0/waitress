@@ -8,7 +8,7 @@ import uk.gemwire.waitress.config.Config;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.net.URI;
+import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,8 +38,6 @@ public class Server {
     private static void getEndpoint(Context request) {
         Waitress.LOGGER.warn("Invalid request " + request.path() + " cannot be handled.");
         request.status(400);
-
-
     }
 
     /**
@@ -90,9 +88,21 @@ public class Server {
                 e.printStackTrace();
             }
         } else {
-            Waitress.LOGGER.warn("File not handled by this repository. Mirroring not implemented.");
-            request.status(404);
-            request.result("Not Found");
+            Waitress.LOGGER.info("Requested file is not in the cache. Downloading..");
+            if (!RepoCache.contains(groupID, artifactID, version, classifier, extension)) {
+                try {
+                    // TODO This probably should be async, downloading takes time
+                    File file = MavenDownloader.getArtifact(groupID, artifactID, version, classifier, extension);
+                    if (file == null) {
+                        request.status(404);
+                        request.result("Not Found");
+                    }else {
+                        request.result(new FileInputStream(file));
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
 
     }

@@ -4,7 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.gemwire.waitress.authentication.Auth;
 import uk.gemwire.waitress.config.Config;
-import uk.gemwire.waitress.config.TOMLReader;
+import uk.gemwire.waitress.config.TempTOMLParser;
+import uk.gemwire.waitress.web.MavenDownloader;
 import uk.gemwire.waitress.web.RepoCache;
 import uk.gemwire.waitress.web.Server;
 
@@ -80,13 +81,15 @@ public class Waitress {
 
         try {
             // Read Config
-            HashMap<String, String> map = TOMLReader.read(new FileReader(parts[1]));
+            HashMap<String, String> map = TempTOMLParser.parse(new FileReader(parts[1]));//TOMLReader.read(new FileReader(parts[1]));
             // Read config into the {@link Config} fields
             Config.set(map);
             // Prepare password authentication maps.
             Auth.setupAuth();
             // Cache all known repositories.
             RepoCache.enumerate();
+
+            if (Config.SHOULD_PROXY) MavenDownloader.setRemote(Config.PROXY_ID, Config.PROXY_TYPE, Config.PROXY_REPO);
 
             LOGGER.info("Set up. Starting route management.");
             // Start the server with the loaded config.
