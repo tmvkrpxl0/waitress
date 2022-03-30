@@ -22,8 +22,10 @@ public final class TOMLReader {
 
     private static StringTokenizer tokens;
 
+    private static final String REGEX = " \t\r\n\f";
+
     public static HashMap<String,String> read(String text) {
-        tokens = new StringTokenizer(text, " \t\r\f");
+        tokens = new StringTokenizer(text, REGEX, true);
         Parser parser = new Parser();
         return parser.parse();
     }
@@ -37,9 +39,7 @@ public final class TOMLReader {
         }
         reader.close();
 
-        tokens = new StringTokenizer(buffer.toString(), " \t\r\f");
-        Parser parser = new Parser();
-        return parser.parse();
+        return read(buffer.toString());
     }
 
     /**
