@@ -5,8 +5,6 @@ import org.slf4j.LoggerFactory;
 import uk.gemwire.waitress.authentication.Auth;
 import uk.gemwire.waitress.config.Config;
 import uk.gemwire.waitress.config.TOMLReader;
-import uk.gemwire.waitress.config.TempTOMLParser;
-import uk.gemwire.waitress.web.MavenDownloader;
 import uk.gemwire.waitress.web.RepoCache;
 import uk.gemwire.waitress.web.Server;
 
