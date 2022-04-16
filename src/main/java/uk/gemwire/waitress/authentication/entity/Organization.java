@@ -15,7 +15,7 @@ import java.util.List;
  *
  * @author Curle
  */
-public class Organization {
+public class Organization implements Entity {
 
     // The name of this Organization.
     private final String name;
@@ -72,6 +72,7 @@ public class Organization {
      * @param perm The permission to override with.
      * @return The instance of this Organization.
      */
+    @Override
     public Organization addArtifactOverride(String groupID, String artifactID, PermissionLevel perm) {
         this.artifactPermissions.put(groupID + "/" + artifactID, perm);
         return this;
@@ -83,6 +84,7 @@ public class Organization {
      * @param perm The permission to override with.
      * @return The instance of this Organization.
      */
+    @Override
     public Organization addGroupOverride(String groupID, PermissionLevel perm) {
         this.groupPermissions.put(groupID, perm);
         return this;
@@ -114,5 +116,23 @@ public class Organization {
 
         // Fall back on NONE, as we don't have anything to do with this group.
         return PermissionLevel.NONE;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Organization that = (Organization) o;
+        return name.equals(that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return getName() + ":[" + String.join(" , ", teams.stream().map(Team::toString).toList()) + "]";
     }
 }
