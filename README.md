@@ -94,3 +94,6 @@ Currently, the admin endpoint allows you to configure:
 * Projects, and their owners.
 * Proxied repositories (repositories that Waitress will redirect to when given a valid coordinate.)
 * The location of the admin endpoint.
+
+### Known Issues
+* When anonymous user wants to download non-cached artifact that presents in proxy repo, Waitress downloads the artifact, cache it and serves it to the anonymous user without performing permission check. But when the same anonymous user requests for the same artifact second time, it is now cached and performs permission check, and waitress now refuses to serve it as the user does not have permission.
