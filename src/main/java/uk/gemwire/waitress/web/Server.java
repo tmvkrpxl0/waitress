@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.NoRouteToHostException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -112,8 +113,9 @@ public class Server {
                     artifact.addVersion(version, classifier, extension);
                 }
                 request.result(new FileInputStream(file));
-            } catch (FileNotFoundException e) {
+            } catch (NoRouteToHostException e) {
                 request.status(404);
+                Waitress.LOGGER.info("File not found in proxy repository!");
             } catch (IOException e) {
                 e.printStackTrace();
             }
