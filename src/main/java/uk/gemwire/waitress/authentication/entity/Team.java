@@ -48,7 +48,6 @@ public class Team implements Entity{
         this.users = new ArrayList<>();
         this.artifactPermissions = new HashMap<>();
         this.groupPermissions = new HashMap<>();
-        org.addTeam(this);
     }
 
     public String getName() {
@@ -70,10 +69,7 @@ public class Team implements Entity{
      * @return The instance of this Team.
      */
     public Team addUser(User newUser) {
-        if (!contains(newUser)){
-            this.users.add(newUser);
-            newUser.addTeam(this);
-        }
+        this.users.add(newUser);
         return this;
     }
 
@@ -142,19 +138,6 @@ public class Team implements Entity{
         // The only thing left to fall back on is the organization we belong to.
         // The org will handle falling back to NONE for us.
         return org.getPermissionFor(group, artifact);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Team team = (Team) o;
-        return name.equals(team.name);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name);
     }
 
     @Override

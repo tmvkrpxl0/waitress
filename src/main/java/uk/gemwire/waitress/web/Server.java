@@ -68,7 +68,7 @@ public class Server {
         final String classifier = coordinate.classifier;
         final String extension = coordinate.extension;
 
-        User user = null;
+        User user;
         try{
             if(request.basicAuthCredentialsExist()) {
                 BasicAuthCredentials credentials = request.basicAuthCredentials();
@@ -78,10 +78,11 @@ public class Server {
                 }
                 user = Auth.getUser(credentials.getUsername()).get();
             } else {
-                user = Auth.getUser("anonymous").get();
+                user = Auth.anonymous;
             }
-        }catch (CalledTooEarlyException ignored) {
-            // ....I hope this catch case never happens
+        }catch (CalledTooEarlyException exception) {
+            request.status(503);
+            return;
         }
 
         Waitress.LOGGER.info("Request for " + groupID + "/" + artifactID +  "/" + version + "/" + artifactID +  "-" + version + classifier + "." + extension + " located. Checking whether we can handle it..");
@@ -105,18 +106,14 @@ public class Server {
             Waitress.LOGGER.info("Requested file is not in the cache. Downloading..");
             try {
                 // TODO This probably should be async, downloading takes time
-                File file = MavenDownloader.getArtifact(groupID, artifactID, version, classifier, extension);
-                {
-                    Artifact artifact = RepoCache.get(groupID, artifactID);
-                    if (artifact == null){
-                        artifact = new Artifact(groupID, artifactID);
-                        RepoCache.addArtifact(artifact);
-                    }
-                    // add artifact to cache
-                    artifact.addVersion(version, classifier, extension);
-                }
+                File file = MavenDownloader.downloadArtifact(groupID, artifactID, version, classifier, extension);
+
+                Artifact artifact = RepoCache.tryAddArtifact(groupID, artifactID);
+                // add artifact to cache
+                artifact.addVersion(version, classifier, extension);
+
                 request.result(new FileInputStream(file));
-            } catch (NoRouteToHostException e) {
+            } catch (FileNotFoundException | NoRouteToHostException e) {
                 request.status(404);
                 Waitress.LOGGER.info("File not found in proxy repository!");
             } catch (IOException e) {
@@ -133,7 +130,7 @@ public class Server {
      * If none matches, the request will be ignored
      * @param request The metadata of the request
      */
-    private static void setMaven(Context request) {
+    private static void putMaven(Context request) {
         MavenCoordinate coordinate = parseCoordinate(request, false);
         if (coordinate == null){
             request.status(404);
@@ -145,28 +142,48 @@ public class Server {
         final String classifier = coordinate.classifier;
         final String extension = coordinate.extension;
 
-        Waitress.LOGGER.info("Upload request for " + groupID + "/" + artifactID +  "/" + version + "/" + artifactID +  "-" + version + classifier + "." + extension + " located.");
+        User user;
+        try{
+            if(request.basicAuthCredentialsExist()) {
+                BasicAuthCredentials credentials = request.basicAuthCredentials();
+                if (!Auth.checkPassword(credentials.getUsername(), credentials.getPassword())) {
+                    request.status(401);
+                    return;
+                }
+                user = Auth.getUser(credentials.getUsername()).get();
+            } else {
+                user = Auth.anonymous;
+            }
+        }catch (CalledTooEarlyException exception) {
+            request.status(503);
+            return;
+        }
+
+        //TODO Should it send 401 when user account is anonymous?
+        if (user.getPermissionFor(groupID, artifactID).level < PermissionLevel.WRITE.level) {
+            request.status(403);
+            return;
+        }
+
+        Waitress.LOGGER.info("Upload request for " + groupID + "/" + artifactID +  "/" + version + "/" + artifactID +  "-" + version + classifier + "." + extension + " was received");
         if (RepoCache.contains(groupID, artifactID, version, classifier, extension)) {
             // If the file already exists, return 409
             Waitress.LOGGER.warn("Artifact " + groupID + "/" + artifactID +  "/" + version + "/" + artifactID +  "-" + version + classifier + "." + extension + " already exists!");
             request.status(409);
-        } else {
-            // Retrieve file from request and save it into cache
-            UploadedFile file = request.uploadedFile(artifactID +  "-" + version + classifier + "." + extension);
-            if (file == null) {
-                request.status(400);
-                return;
-            }
-            FileUtil.streamToFile(file.getContent(), Config.DATA_DIR + groupID + "/" + artifactID +  "/" + version + "/" + artifactID +  "-" + version + classifier + "." + extension);
-            request.status(201);
-
-            Artifact artifact = RepoCache.get(groupID, artifactID);
-            if (artifact == null){
-                artifact = new Artifact(groupID, artifactID);
-                RepoCache.addArtifact(artifact);
-            }
-            artifact.addVersion(version, classifier, extension);
+            return;
         }
+        // Retrieve file from request and save it into cache
+        UploadedFile file = request.uploadedFile(artifactID +  "-" + version + classifier + "." + extension);
+        if (file == null) {
+            request.status(400);
+            Waitress.LOGGER.warn("The request does not contain any file!");
+            return;
+        }
+        FileUtil.streamToFile(file.getContent(), Config.DATA_DIR + groupID + "/" + artifactID +  "/" + version + "/" + artifactID +  "-" + version + classifier + "." + extension);
+
+        Artifact artifact = RepoCache.tryAddArtifact(groupID, artifactID);
+        artifact.addVersion(version, classifier, extension);
+        request.status(201);
     }
 
     /**
@@ -179,7 +196,7 @@ public class Server {
         Javalin server = Javalin.create().start(Config.LISTEN_PORT);
 
         server.get("/*", Server::getMaven);
-        server.put("/*", Server::setMaven);
+        server.put("/*", Server::putMaven);
 
         Waitress.LOGGER.info("Server started. Waiting for requests.");
 

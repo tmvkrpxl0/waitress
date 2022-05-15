@@ -69,7 +69,7 @@ public class RepoCache {
                         get(group, artifact).addVersion(version, classifier, extension);
                     else
                         get(group, artifact).addVersion(version, "", extension);
-                    Waitress.LOGGER.warn("Artifact " + artifact + " version " + version + (classifier.length() != 0 ? classifier : "") + " and extension " + extension + " is now tracked.");
+                    Waitress.LOGGER.warn("Artifact " + artifact + " version " + version + (classifier.length() != 0 ? classifier : "") + " with extension " + extension + " is now tracked.");
                 });
 
             });
