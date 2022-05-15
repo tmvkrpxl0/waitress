@@ -58,7 +58,10 @@ public class Server {
      */
     private static void getMaven(Context request) {
         MavenCoordinate coordinate = parseCoordinate(request, true);
-        if (coordinate == null) return;
+        if (coordinate == null){
+            request.status(404);
+            return;
+        }
         final String groupID = coordinate.groupID;
         final String artifactID = coordinate.artifactID;
         final String version = coordinate.version;
@@ -132,7 +135,10 @@ public class Server {
      */
     private static void setMaven(Context request) {
         MavenCoordinate coordinate = parseCoordinate(request, false);
-        if (coordinate == null) return;
+        if (coordinate == null){
+            request.status(404);
+            return;
+        }
         final String groupID = coordinate.groupID;
         final String artifactID = coordinate.artifactID;
         final String version = coordinate.version;
